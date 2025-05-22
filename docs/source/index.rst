@@ -1,17 +1,22 @@
-.. pyAdmin documentation master file, created by
-   sphinx-quickstart on Wed May 21 15:44:37 2025.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
-pyAdmin documentation
-=====================
-
-Add your content using ``reStructuredText`` syntax. See the
-`reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_
-documentation for details.
-
+Welcome to pyAdmin's documentation!
+===================================
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
+   modules
+
+API Reference
+=============
+.. toctree::
+   :maxdepth: 2
+
+   pyAdmin.file_manager
+   pyAdmin.utils
+
+Indices and tables
+==================
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`

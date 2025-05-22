@@ -1,3 +1,6 @@
+"""Module with utility functions for data conversion."""
+
+
 def bytes_to_gb(bytes_value: int) -> float:
     """
     Convert bytes to gigabytes.

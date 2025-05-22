@@ -1,5 +1,5 @@
-pyAdmin
-=======
+File Manager Module
+===================
 
 .. automodule:: pyAdmin.file_manager
    :members:

@@ -1,4 +1,4 @@
-from .file_manager import FileManager
+"""pyAdmin: A Python package for file management and system monitoring."""
 
-__version__ = "0.1.0"
-__all__ = ['FileManager']
+version = "0.1.0"
+all = ['FileManager']

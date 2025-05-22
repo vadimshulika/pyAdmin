@@ -1,3 +1,5 @@
+"""This class for file operations and system monitoring."""
+
 import os
 import shutil
 import zipfile
@@ -13,8 +15,11 @@ except ImportError:
 
 
 class FileManager:
-    """A class to manage files, directories, and system monitoring."""
-    
+    """A class to manage files, directories, and system monitoring.
+
+    Provides methods to copy, move, compress files, and monitor resources.
+    """
+
     def copy_file(self, source: str, destination: str) -> bool:
         """
         Copy a file from source to destination.
@@ -85,7 +90,8 @@ class FileManager:
             Dict: System status data or empty dict if psutil is not installed.
         """
         if not PSUTIL_AVAILABLE:
-            print("psutil is required for this feature. Install it with 'pip install psutil'.")
+            print("psutil is required for this feature. ")
+            print("Install it with 'pip install psutil'.")
             return {}
 
         status = {
