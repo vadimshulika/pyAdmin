@@ -1,8 +1,8 @@
 """This class for file operations and system monitoring."""
 
-import os
 import shutil
 import zipfile
+import inspect
 from typing import List, Dict
 from pathlib import Path
 from pyAdmin.utils import bytes_to_gb
@@ -20,6 +20,19 @@ class FileManager:
     Provides methods to copy, move, compress files, and monitor resources.
     """
 
+    def __init__(self):
+        """Initiallize path to directories, which import this class."""
+        frame = inspect.stack()[1]
+        self.caller_dir = Path(frame.filename).parent.resolve()
+
+    def _resolve_path(self, path: str) -> Path:
+        """Convert path.
+
+        Convert a relative path to an absolute path relative
+        to the caller's directory.
+        """
+        return (self.caller_dir / path).resolve()
+
     def copy_file(self, source: str, destination: str) -> bool:
         """
         Copy a file from source to destination.
@@ -31,9 +44,12 @@ class FileManager:
         Returns:
             bool: True if successful, False otherwise.
         """
+        src = self._resolve_path(source)
+        dest = self._resolve_path(destination)
+
         try:
-            shutil.copy(source, destination)
-            print(f"File {source} copied to {destination}")
+            shutil.copy(src, dest)
+            print(f"File {src} copied to {dest}")
             return True
         except Exception as e:
             print(f"Copy error: {str(e)}")
@@ -50,9 +66,12 @@ class FileManager:
         Returns:
             bool: True if successful, False otherwise.
         """
+        src = self._resolve_path(source)
+        dest = self._resolve_path(destination)
+
         try:
-            shutil.move(source, destination)
-            print(f"File {source} moved to {destination}")
+            shutil.move(src, dest)
+            print(f"File {src} moved to {dest}")
             return True
         except Exception as e:
             print(f"Move error: {str(e)}")
@@ -69,14 +88,17 @@ class FileManager:
         Returns:
             bool: True if successful, False otherwise.
         """
+        zip_path = self._resolve_path(zip_name)
+
         try:
-            with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
                 for file in files:
-                    if Path(file).exists():
-                        zipf.write(file, arcname=os.path.basename(file))
+                    file_path = self._resolve_path(file)
+                    if file_path.exists():
+                        zipf.write(file_path, arcname=file_path.name)
                     else:
-                        print(f"Warning: {file} does not exist")
-            print(f"Archive {zip_name} created successfully")
+                        print(f"Warning: {file_path} does not exist")
+            print(f"Archive {zip_path} created successfully")
             return True
         except Exception as e:
             print(f"Compression error: {str(e)}")

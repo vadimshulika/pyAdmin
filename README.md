@@ -10,16 +10,28 @@
 - Создание ZIP-архивов.
 - Мониторинг использования диска, памяти и CPU.
 
-## Примеры
+## Использование
+Все пути к файлам указываются **относительно директории вашего скрипта**:
 ```python
 from pyAdmin import FileManager
 
 fm = FileManager()
-# Copy files
-fm.copy_file("source.txt", "destination.txt")
-# Get information about system
+    
+# Тестирование копирования
+fm.copy_file('test.txt', 'copy_test.txt')
+    
+# Тестирование перемещения
+fm.move_file('move_test.txt', 'moved/move_test.txt')
+    
+# Тестирование архивации
+fm.compress_files(['file1.txt', 'file2.txt'], 'archive.zip')
+    
+# Получение информации о системе
 status = fm.get_system_status()
-print(f"Free disk space: {status['disk']['free_gb']} GB")
+print("\nСистемная информация:")
+print(f"Диск: {status['disk']['free']} GB свободно из {status['disk']['total']} GB")
+print(f"Память: {status['memory']['used']} GB использовано из {status['memory']['total']} GB")
+print(f"CPU: {status['cpu']['usage_percent']}% загрузки")
 ```
 
 ## Установка
