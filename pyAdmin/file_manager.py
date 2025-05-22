@@ -59,6 +59,8 @@ class FileManager:
         """
         Move a file from source to destination.
 
+        Automatically creates destination directory if it doesn't exist.
+
         Args:
             source (str): Path to the source file.
             destination (str): Path to the destination.
@@ -70,6 +72,9 @@ class FileManager:
         dest = self._resolve_path(destination)
 
         try:
+            dest_dir = dest.parent
+            dest_dir.mkdir(parents=True, exist_ok=True)
+
             shutil.move(src, dest)
             print(f"File {src} moved to {dest}")
             return True

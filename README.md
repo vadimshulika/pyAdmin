@@ -29,8 +29,8 @@ fm.compress_files(['file1.txt', 'file2.txt'], 'archive.zip')
 # Получение информации о системе
 status = fm.get_system_status()
 print("\nСистемная информация:")
-print(f"Диск: {status['disk']['free']} GB свободно из {status['disk']['total']} GB")
-print(f"Память: {status['memory']['used']} GB использовано из {status['memory']['total']} GB")
+print(f"Диск: {status['disk']['free_gb']} GB свободно из {status['disk']['total_gb']} GB")
+print(f"Память: {status['memory']['used_gb']} GB использовано из {status['memory']['total_gb']} GB")
 print(f"CPU: {status['cpu']['usage_percent']}% загрузки")
 ```
 
