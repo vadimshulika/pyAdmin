@@ -4,6 +4,7 @@ import shutil
 import zipfile
 import inspect
 from typing import List, Dict
+from datetime import datetime
 from pathlib import Path
 from pyAdmin.utils import bytes_to_gb
 
@@ -108,6 +109,39 @@ class FileManager:
         except Exception as e:
             print(f"Compression error: {str(e)}")
             return False
+        
+    def get_file_metadata(self, file_path: str) -> Dict:
+        """
+        Retrieve metadata of a specified file.
+
+        Args:
+            file_path (str): Path to the target file.
+
+        Returns:
+            Dict: Dictionary containing file metadata (size, creation time,
+                  modification time, extension, permissions). Returns empty dict
+                  if file does not exist or error occurs.
+        """
+        resolved_path = self._resolve_path(file_path)
+        if not resolved_path.exists():
+            print(f"File {resolved_path} does not exist")
+            return {}
+
+        try:
+            stat = resolved_path.stat()
+            creation_time = datetime.fromtimestamp(stat.st_ctime).strftime("%d.%m.%Y")
+            modification_time = datetime.fromtimestamp(stat.st_mtime).strftime("%d.%m.%Y")
+            return {
+                'size_bytes': stat.st_size,
+                'creation_time': creation_time,
+                'modification_time': modification_time,
+                'extension': resolved_path.suffix,
+                'permissions': oct(stat.st_mode)[-3:],
+                'absolute_path': str(resolved_path.absolute())
+            }
+        except Exception as e:
+            print(f"Metadata error: {str(e)}")
+            return {}
 
     def get_system_status(self) -> Dict:
         """

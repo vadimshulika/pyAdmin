@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyAdmin"
+version = "0.1.2"
+description = "CLI-утилита для управления файлами и мониторинга системы"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Шулика Вадим Владимирович", email = "vadim.shulika4@gmail.com"}
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent"
+]
+dependencies = [
+    "psutil >=5.9.0",
+    "shutilwhich>=1.1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/vadimshulika/pyAdmin"
+
+[tool.setuptools]
+packages = ["pyAdmin"]
+include-package-data = true
+
+[tool.setuptools.package-data]
+pyAdmin = ["*.txt", "*.md"]
+
+[project.optional-dependencies]
+test = [
+    "pytest >=7.0.0",
+    "tox >=3.24.0"
+]
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203", "W503"]
+exclude = [
+    ".git",
+    "__pycache__",
+    ".tox",
+    "dist",
+    "build"
+]
+
+[tool.pydocstyle]
+match = "(?!test_).*\\.py"
+match-dir = "[^\\.].*"
