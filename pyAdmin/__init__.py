@@ -2,5 +2,5 @@
 
 from .file_manager import FileManager
 
-version = "0.1.2"
-all = ['FileManager', 'CommandExecutor']
+version = "0.2.0"
+all = ['FileManager', 'SystemMonitor', 'CommandExecutor']
