@@ -3,7 +3,7 @@
 import psutil
 from datetime import datetime
 from typing import Dict, List, Optional
-from utils import bytes_to_gb
+from pyAdmin.utils import bytes_to_gb
 
 
 class SystemMonitor:
