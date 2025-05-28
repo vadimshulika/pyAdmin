@@ -15,10 +15,16 @@ class FileManager:
     - Creating ZIP archives
     - Retrieving file metadata
     - Path resolution relative to caller's directory
+
+    Attributes:
+        caller_dir (Path): The directory of the script that instantiated the FileManager.
     """
 
     def __init__(self) -> None:
-        """Initialize with caller's directory as base path.
+        """Initialize FileManager with caller's directory as base path.
+        
+        Determines the directory of the caller script (where the FileManager is instantiated)
+        and sets it as the base path for relative operations.
         
         Example:
             >>> fm = FileManager()
@@ -33,7 +39,7 @@ class FileManager:
             path: Relative path string to resolve
             
         Returns:
-            Path: Absolute Path object
+            Path: Absolute Path object resolved relative to caller's directory
             
         Example:
             >>> fm._resolve_path("data.txt")
@@ -42,7 +48,10 @@ class FileManager:
         return (self.caller_dir / path).resolve()
 
     def copy_file(self, source: str, destination: str) -> bool:
-        """Copy file with full path resolution and error logging.
+        """Copy file with full path resolution and error handling.
+
+        Automatically creates destination directories if needed.
+        Prints operation status and errors.
         
         Args:
             source: Relative path to source file
@@ -55,6 +64,10 @@ class FileManager:
             >>> fm.copy_file("config.yml", "backups/config_backup.yml")
             File /project/config.yml copied to /project/backups/config_backup.yml
             True
+
+            >>> fm.copy_file("missing.txt", "backup.txt")
+            Copy failed: /project/missing.txt not found
+            False
         """
         src = self._resolve_path(source)
         dest = self._resolve_path(destination)
@@ -74,6 +87,9 @@ class FileManager:
 
     def move_file(self, source: str, destination: str) -> bool:
         """Move file with automatic directory creation.
+
+        Automatically creates destination directories if needed.
+        Prints operation status and errors.
         
         Args:
             source: Relative path to source file
@@ -86,6 +102,10 @@ class FileManager:
             >>> fm.move_file("temp.log", "logs/2023.log")
             File temp.log moved to logs/2023.log
             True
+
+            >>> fm.move_file("locked.file", "new.file")
+            Move failed: Permission denied for /project/locked.file
+            False
         """
         src = self._resolve_path(source)
         dest = self._resolve_path(destination)
@@ -106,17 +126,24 @@ class FileManager:
     def compress_files(self, files: List[str], zip_name: str) -> bool:
         """Create ZIP archive with validation of source files.
         
+        Skips non-file entries and directories. Prints detailed operation status.
+        
         Args:
             files: List of relative file paths to compress
-            zip_name: Name for output ZIP archive
+            zip_name: Name for output ZIP archive (relative path)
             
         Returns:
-            bool: True if archive created successfully
+            bool: True if archive created successfully, False otherwise
             
         Example:
             >>> fm.compress_files(["data.csv", "config.yml"], "backup.zip")
             Archive backup.zip created with 2 files
             True
+
+            >>> fm.compress_files(["missing.txt"], "empty.zip")
+            Skipping /project/missing.txt: Not a file
+            Archive empty.zip created with 0 files
+            False
         """
         zip_path = self._resolve_path(zip_name)
         added_files = 0
@@ -161,6 +188,10 @@ class FileManager:
                 'creation_time': '15.07.2023',
                 ...
             }
+
+            >>> fm.get_file_metadata("missing.file")
+            File missing.file not found
+            {}
         """
         resolved_path = self._resolve_path(file_path)
         

@@ -11,25 +11,32 @@ from pathlib import Path
 from typing import List, Tuple, Dict, Optional, Callable, Any
 
 class CommandExecutor:
-    """Main class for executing and managing shell commands on Windows systems.
-    
+    """Execute and manage shell commands on Windows systems.
+
     Provides features for:
     - Executing single commands and command sequences
     - Real-time output monitoring
-    - Scheduled task execution
+    - Scheduled task execution (interval and one-time)
     - Environment variable management
+    - Privileged command execution
+    - Comprehensive logging
     
     Attributes:
         env_vars (Dict[str, str]): Custom environment variables
         working_dir (Path): Current working directory
         scheduled_tasks (Dict[int, Dict]): Active scheduled tasks
+        logger (logging.Logger): Logger instance for operations
     """
     
     def __init__(self, log_file: str = "command_executor.log"):
         """Initialize command executor with default settings.
         
         Args:
-            log_file (str): Path to log file. Default: 'command_executor.log'
+            log_file: Path to log file (default: 'command_executor.log')
+
+        Example:
+            >>> executor = CommandExecutor()
+            >>> executor = CommandExecutor("my_commands.log")
         """
         self._init_logger(log_file)
         self.env_vars = {}
@@ -42,7 +49,7 @@ class CommandExecutor:
         self.logger.info("CommandExecutor initialized")
 
     def _init_logger(self, log_file: str) -> None:
-        """Configure logging handlers.
+        """Configure logging handlers with file and console outputs.
         
         Args:
             log_file (str): Path to log file
@@ -81,11 +88,19 @@ class CommandExecutor:
             shell (bool): Use shell interpreter. Recommended for Windows
             
         Returns:
-            Tuple[str, str, int]: (stdout, stderr, return_code)
+            Tuple[str, str, int]:
+                - stdout: Standard output content
+                - stderr: Standard error content
+                - return_code: Process exit code
+
+            On timeout or exception, returns empty outputs and -1 return code.
             
         Examples:
             >>> executor.execute_command("echo Hello World")
             ('Hello World\\r\\n', '', 0)
+
+            >>> executor.execute_command("invalid_command")
+            ('', 'Execution failed: invalid_command - ...', -1)
         """
         self.logger.debug(f"Executing command: {command}")
         try:
@@ -128,8 +143,12 @@ class CommandExecutor:
             List[Tuple[str, str, int]]: Execution results for each command
             
         Examples:
-            >>> executor.execute_sequence(["echo 1", "echo 2"])
-            [('1\\r\\n', '', 0), ('2\\r\\n', '', 0)]
+            >>> commands = ["echo First", "echo Second", "invalid_command"]
+            >>> results = executor.execute_sequence(commands)
+            >>> len(results)
+            3
+            >>> results[0]
+            ('First\\r\\n', '', 0)
         """
         results = []
         self.logger.info(f"Executing command sequence ({len(commands)} commands)")
@@ -153,22 +172,28 @@ class CommandExecutor:
         max_runs: Optional[int] = None,
         callback: Optional[Callable[[str, str, int], None]] = None
     ) -> int:
-        """Schedule periodic command execution with configurable parameters.
+        """Schedule periodic command execution.
         
         Args:
             command (str): Command to execute periodically
             interval (int): Execution interval in seconds
             immediate_run (bool): Run immediately after scheduling
             max_runs (int): Maximum number of executions (None = infinite)
-            callback (Callable): Function to call after each execution
+            callback (Callable): Function to call after each execution with signature:
+                (stdout: str, stderr: str, return_code: int) -> None
             
         Returns:
             int: Unique task ID
             
         Examples:
-            >>> task_id = executor.schedule_command("echo Task", interval=5)
-            >>> executor.get_scheduled_tasks()[task_id]['command']
-            'echo Task'
+            >>> def callback(out, err, code):
+            ...     print(f"Task completed with code {code}")
+            >>> task_id = executor.schedule_command(
+            ...     "echo ScheduledTask",
+            ...     interval=10,
+            ...     immediate_run=True,
+            ...     callback=callback
+            ... )
         """
         self.task_id_counter += 1
         task = {
@@ -203,7 +228,8 @@ class CommandExecutor:
         Args:
             command (str): Command to execute
             execution_time (datetime): Exact execution time
-            callback (Callable): Function to call after execution
+            callback (Callable): Function to call after execution with signature:
+                (stdout: str, stderr: str, return_code: int) -> None
             
         Returns:
             int: Unique task ID
@@ -238,14 +264,17 @@ class CommandExecutor:
         """Verify if command is available in system PATH.
         
         Args:
-            command (str): Command to check (first token only)
+            command (str): Command to check (uses first token only)
             
         Returns:
-            bool: True if command exists
+            bool: True if command exists in PATH, False otherwise
             
         Examples:
             >>> executor.validate_command("python --version")
             True
+            
+            >>> executor.validate_command("nonexistent_command")
+            False
         """
         cmd = command.split()[0]
         exists = shutil.which(cmd) is not None
@@ -259,58 +288,10 @@ class CommandExecutor:
             env_vars (Dict[str, str]): Key-value pairs to add/update
             
         Examples:
-            >>> executor.set_environment({"DEBUG": "true"})
+            >>> executor.set_environment({"PYTHONPATH": "/custom/path", "DEBUG": "1"})
         """
         self.env_vars.update(env_vars)
         self.logger.info(f"Updated environment variables: {list(env_vars.keys())}")
-
-    def _scheduler_loop(self) -> None:
-        """Main scheduler loop monitoring task execution times."""
-        self.logger.debug("Scheduler loop started")
-        while not self.stop_scheduler.is_set():
-            try:
-                current_time = time.time()
-                for task_id, task in list(self.scheduled_tasks.items()):
-                    if not task.get('active', False):
-                        continue
-
-                    if task['type'] == 'interval':
-                        if current_time - task['last_run'] >= task['interval']:
-                            self._trigger_task(task_id)
-                            
-                    elif task['type'] == 'at':
-                        if not task['fired'] and current_time >= task['execution_time']:
-                            self._trigger_task(task_id)
-                            
-                time.sleep(1)
-            except Exception as e:
-                self.logger.critical(f"Scheduler loop failed: {str(e)}", exc_info=True)
-                break
-
-    def _execute_scheduled_task(self, task_id: int) -> None:
-        """Execute task and handle completion logic."""
-        task = self.scheduled_tasks.get(task_id)
-        if not task or 'run_count' not in task:
-            self.logger.error(f"Invalid task structure: {task_id}")
-            return
-
-        try:
-            self.logger.info(f"Executing task {task_id}: {task['command']}")
-            stdout, stderr, code = self.execute_command(task['command'])
-            
-        except Exception as e:
-            self.logger.error(f"Task {task_id} failed: {str(e)}", exc_info=True)
-            stdout, stderr, code = "", str(e), -1
-
-        finally:
-            if task.get('callback'):
-                task['callback'](stdout, stderr, code)
-
-            task['run_count'] += 1
-            task['last_run'] = time.time()
-
-            if task['type'] == 'at' or (task['max_runs'] is not None and task['run_count'] >= task['max_runs']):
-                self.remove_scheduled_task(task_id)
 
     def realtime_output(
         self,
@@ -328,12 +309,16 @@ class CommandExecutor:
             **kwargs: Additional arguments for subprocess.Popen
             
         Returns:
-            int: Command exit code
+            int: Command exit code (-1 on failure)
             
         Examples:
-            >>> def callback(line):
-            ...     print(f"OUT: {line}")
-            >>> executor.realtime_output("ping yandex.ru -n 2", callback)
+            >>> def output_handler(line):
+            ...     print(f"OUTPUT: {line}")
+            >>> executor.realtime_output(
+            ...     "ping 127.0.0.1 -n 2",
+            ...     output_handler
+            ... )
+            0
         """
         self.logger.info(f"Starting realtime execution: {command}")
         try:
@@ -380,12 +365,12 @@ class CommandExecutor:
         except Exception as e:
             self.logger.error(f"Realtime execution failed: {str(e)}", exc_info=True)
             return -1
-
+        
     def remove_scheduled_task(self, task_id: int) -> bool:
         """Remove scheduled task by ID.
         
         Args:
-            task_id (int): Task identifier returned by schedule methods
+            task_id (int): Task identifier from schedule methods
             
         Returns:
             bool: True if task was removed, False if not found
@@ -401,7 +386,7 @@ class CommandExecutor:
             return True
         self.logger.warning(f"Task {task_id} not found for removal")
         return False
-
+    
     def pause_scheduler(self) -> None:
         """Pause all scheduled task executions.
         
@@ -448,70 +433,7 @@ class CommandExecutor:
         """
         self.logger.debug("Returning tasks snapshot")
         return {k: v.copy() for k, v in self.scheduled_tasks.items()}
-
-    def _trigger_task(self, task_id: int) -> None:
-        """Internal method to launch task execution thread.
-        
-        Args:
-            task_id (int): ID of task to trigger
-        """
-        try:
-            task = self.scheduled_tasks[task_id]
-            task['last_run'] = time.time()
-            
-            thread = threading.Thread(
-                target=self._execute_scheduled_task,
-                args=(task_id,),
-                name=f"TaskExecutor-{task_id}"
-            )
-            thread.start()
-            
-            if task['type'] == 'at':
-                task['fired'] = True
-                self.logger.info(f"Triggered one-time task {task_id}")
-            else:
-                self.logger.debug(f"Triggered interval task {task_id}")
-
-        except KeyError:
-            self.logger.error(f"Failed to trigger missing task {task_id}")
-        except Exception as e:
-            self.logger.error(f"Task trigger failed: {str(e)}", exc_info=True)
-
-    def _start_scheduler(self) -> None:
-        """Initialize and start scheduler background thread."""
-        if self.scheduler_thread and self.scheduler_thread.is_alive():
-            self.logger.warning("Scheduler thread already running")
-            return
-
-        self.scheduler_thread = threading.Thread(
-            target=self._scheduler_loop,
-            name="TaskScheduler"
-        )
-        self.scheduler_thread.daemon = True
-        self.scheduler_thread.start()
-        self.logger.info("Scheduler thread started")
-
-    def __del__(self):
-        """Cleanup resources and stop scheduler on object destruction."""
-        if self.scheduler_thread and self.scheduler_thread.is_alive():
-            self.stop_scheduler.set()
-            try:
-                if self.scheduler_thread is not threading.current_thread():
-                    self.scheduler_thread.join(timeout=0.5)
-            except RuntimeError:
-                pass
-            self.logger.info("Scheduler thread stopped")
-
-    def _handle_task_removal(self, task_id: int) -> None:
-        """Internal helper for task cleanup operations.
-        
-        Args:
-            task_id (int): ID of task to clean up
-        """
-        if task_id in self.scheduled_tasks:
-            del self.scheduled_tasks[task_id]
-            self.logger.debug(f"Internal cleanup for task {task_id}")
-
+    
     def set_working_directory(self, path: str) -> None:
         """Update default working directory for command execution.
         
@@ -542,7 +464,7 @@ class CommandExecutor:
             
         Examples:
             >>> env = executor.export_environment()
-            >>> env.update({"DEBUG": "true"})
+            >>> env["NEW_VAR"] = "value"
             >>> executor.set_environment(env)
         """
         return self.env_vars.copy()
@@ -558,8 +480,123 @@ class CommandExecutor:
         self.env_vars.clear()
         self.logger.info("Environment variables reset")
 
+    # ==================================================================
+    # Internal methods (documented for completeness but typically hidden)
+    # ==================================================================
+
+    def _scheduler_loop(self) -> None:
+        """Internal: Main scheduler loop monitoring task execution times."""
+        self.logger.debug("Scheduler loop started")
+        while not self.stop_scheduler.is_set():
+            try:
+                current_time = time.time()
+                for task_id, task in list(self.scheduled_tasks.items()):
+                    if not task.get('active', False):
+                        continue
+
+                    if task['type'] == 'interval':
+                        if current_time - task['last_run'] >= task['interval']:
+                            self._trigger_task(task_id)
+                            
+                    elif task['type'] == 'at':
+                        if not task['fired'] and current_time >= task['execution_time']:
+                            self._trigger_task(task_id)
+                            
+                time.sleep(1)
+            except Exception as e:
+                self.logger.critical(f"Scheduler loop failed: {str(e)}", exc_info=True)
+                break
+
+    def _execute_scheduled_task(self, task_id: int) -> None:
+        """Internal: Execute task and handle completion logic."""
+        task = self.scheduled_tasks.get(task_id)
+        if not task or 'run_count' not in task:
+            self.logger.error(f"Invalid task structure: {task_id}")
+            return
+
+        try:
+            self.logger.info(f"Executing task {task_id}: {task['command']}")
+            stdout, stderr, code = self.execute_command(task['command'])
+            
+        except Exception as e:
+            self.logger.error(f"Task {task_id} failed: {str(e)}", exc_info=True)
+            stdout, stderr, code = "", str(e), -1
+
+        finally:
+            if task.get('callback'):
+                task['callback'](stdout, stderr, code)
+
+            task['run_count'] += 1
+            task['last_run'] = time.time()
+
+            if task['type'] == 'at' or (task['max_runs'] is not None and task['run_count'] >= task['max_runs']):
+                self.remove_scheduled_task(task_id)
+
+    def _trigger_task(self, task_id: int) -> None:
+        """Internal: Launch task execution in separate thread.
+        
+        Args:
+            task_id (int): ID of task to trigger
+        """
+        try:
+            task = self.scheduled_tasks[task_id]
+            task['last_run'] = time.time()
+            
+            thread = threading.Thread(
+                target=self._execute_scheduled_task,
+                args=(task_id,),
+                name=f"TaskExecutor-{task_id}"
+            )
+            thread.start()
+            
+            if task['type'] == 'at':
+                task['fired'] = True
+                self.logger.info(f"Triggered one-time task {task_id}")
+            else:
+                self.logger.debug(f"Triggered interval task {task_id}")
+
+        except KeyError:
+            self.logger.error(f"Failed to trigger missing task {task_id}")
+        except Exception as e:
+            self.logger.error(f"Task trigger failed: {str(e)}", exc_info=True)
+
+    def _start_scheduler(self) -> None:
+        """Internal: Initialize and start scheduler background thread."""
+        if self.scheduler_thread and self.scheduler_thread.is_alive():
+            self.logger.warning("Scheduler thread already running")
+            return
+
+        self.scheduler_thread = threading.Thread(
+            target=self._scheduler_loop,
+            name="TaskScheduler"
+        )
+        self.scheduler_thread.daemon = True
+        self.scheduler_thread.start()
+        self.logger.info("Scheduler thread started")
+
+    def __del__(self):
+        """Cleanup: Stop scheduler on object destruction."""
+        if self.scheduler_thread and self.scheduler_thread.is_alive():
+            self.stop_scheduler.set()
+            try:
+                if self.scheduler_thread is not threading.current_thread():
+                    self.scheduler_thread.join(timeout=0.5)
+            except RuntimeError:
+                pass
+            self.logger.info("Scheduler thread stopped")
+
+    def _handle_task_removal(self, task_id: int) -> None:
+        """Internal: Helping for task cleanup operations.
+        
+        Args:
+            task_id (int): ID of task to clean up
+        """
+        if task_id in self.scheduled_tasks:
+            del self.scheduled_tasks[task_id]
+            self.logger.debug(f"Internal cleanup for task {task_id}")
+
     def _validate_task_structure(self, task: Dict) -> bool:
-        """Internal validation for task dictionary integrity.
+        """Internal: Validate task dictionary integrity.
         
         Returns:
             bool: True if task structure is valid

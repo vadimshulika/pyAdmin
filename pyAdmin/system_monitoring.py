@@ -16,10 +16,17 @@ class SystemMonitor:
     - System load averages
     - Hardware temperatures (platform-dependent)
     - Process and uptime information
+
+    Attributes:
+        psutil_available (bool): Indicates if psutil package is installed and available.
     """
 
     def __init__(self) -> None:
-        """Initialize system monitor and verify psutil availability."""
+        """Initialize system monitor and verify psutil availability.
+        
+        Automatically checks for psutil installation during initialization.
+        Prints installation instructions if package is missing.
+        """
         self.psutil_available = self._check_psutil()
 
     @staticmethod
@@ -30,7 +37,7 @@ class SystemMonitor:
             bool: True if psutil is available, False otherwise
         """
         try:
-            import psutil  # noqa: F401
+            import psutil
             return True
         except ImportError:
             print("Error: psutil required for system monitoring.")
@@ -42,21 +49,24 @@ class SystemMonitor:
         
         Returns:
             Dict: Composite dictionary containing:
-                - disk: Disk usage statistics
-                - memory: Physical memory metrics
-                - cpu: Processor utilization data
-                - network: Network I/O counters
-                - swap: Swap memory usage
-                - load_avg: System load averages
-                - uptime: System uptime in seconds
-                - temperatures: Sensor data (if available)
-                - process_count: Running processes count
+                - disk: Disk usage statistics (see _get_disk_usage)
+                - memory: Physical memory metrics (see _get_memory_usage)
+                - cpu: Processor utilization data (see _get_cpu_usage)
+                - network: Network I/O counters (see _get_network_stats)
+                - swap: Swap memory usage (see _get_swap_usage)
+                - load_avg: System load averages (see _get_load_average)
+                - uptime: System uptime in seconds (float)
+                - temperatures: Sensor data if available (see _get_temperatures)
+                - process_count: Running processes count (int)
                 
             Example:
                 >>> monitor = SystemMonitor()
                 >>> status = monitor.get_system_status()
                 >>> print(status['cpu']['usage_percent'])
                 23.7
+
+                >>> print(status['disk']['total_gb'])
+                465.76
         """
         if not self.psutil_available:
             return {}
@@ -78,14 +88,15 @@ class SystemMonitor:
         
         Returns:
             Dict: Disk metrics with keys:
-                - total_gb: Total space (GB)
-                - used_gb: Used space (GB)
-                - free_gb: Free space (GB)
-                - percent_used: Usage percentage
+                - total_gb: Total space in gigabytes (float)
+                - used_gb: Used space in gigabytes (float)
+                - free_gb: Free space in gigabytes (float)
+                - percent_used: Usage percentage (float)
                 
             Example:
                 >>> monitor._get_disk_usage()
-                {'total_gb': 465.76, 'used_gb': 230.15, ...}
+                {'total_gb': 465.76, 'used_gb': 230.15, 
+                 'free_gb': 235.61, 'percent_used': 49.4}
         """
         disk = psutil.disk_usage('/')
         return {
@@ -100,14 +111,15 @@ class SystemMonitor:
         
         Returns:
             Dict: Memory metrics with keys:
-                - total_gb: Total RAM (GB)
-                - available_gb: Available RAM (GB)
-                - used_gb: Used RAM (GB)
-                - percent_used: Usage percentage
+                - total_gb: Total RAM in gigabytes (float)
+                - available_gb: Available RAM in gigabytes (float)
+                - used_gb: Used RAM in gigabytes (float)
+                - percent_used: Usage percentage (float)
                 
             Example:
                 >>> monitor._get_memory_usage()
-                {'total_gb': 15.6, 'available_gb': 8.2, ...}
+                {'total_gb': 15.6, 'available_gb': 8.2, 
+                 'used_gb': 7.4, 'percent_used': 47.4}
         """
         memory = psutil.virtual_memory()
         return {
@@ -122,14 +134,15 @@ class SystemMonitor:
         
         Returns:
             Dict: CPU metrics with keys:
-                - usage_percent: Current load percentage
-                - cores: Physical core count
-                - threads: Logical thread count
-                - frequency: Current clock speed (GHz) if available
+                - usage_percent: Current load percentage (float)
+                - cores: Physical core count (int)
+                - threads: Logical thread count (int)
+                - frequency: Current clock speed (GHz) (float or None if unavailable)
                 
             Example:
                 >>> monitor._get_cpu_usage()
-                {'usage_percent': 32.1, 'cores': 4, ...}
+                {'usage_percent': 32.1, 'cores': 4, 
+                 'threads': 8, 'frequency': 3.6}
         """
         return {
             'usage_percent': psutil.cpu_percent(interval=0.5),
@@ -143,14 +156,15 @@ class SystemMonitor:
         
         Returns:
             Dict: Network metrics with keys:
-                - bytes_sent: Total bytes sent
-                - bytes_recv: Total bytes received
-                - packets_sent: Total packets sent
-                - packets_recv: Total packets received
+                - bytes_sent: Total bytes sent (int)
+                - bytes_recv: Total bytes received (int)
+                - packets_sent: Total packets sent (int)
+                - packets_recv: Total packets received (int)
                 
             Example:
                 >>> monitor._get_network_stats()
-                {'bytes_sent': 4589321, 'bytes_recv': 7832104, ...}
+                {'bytes_sent': 4589321, 'bytes_recv': 7832104, 
+                 'packets_sent': 12045, 'packets_recv': 18567}
         """
         net = psutil.net_io_counters()
         return {
@@ -165,19 +179,15 @@ class SystemMonitor:
         
         Returns:
             Dictionary with keys:
-            - total_gb: Total swap space in gigabytes
-            - used_gb: Used swap space in gigabytes
-            - free_gb: Free swap space in gigabytes
-            - percent_used: Percentage of swap used
+            - total_gb: Total swap space in gigabytes (float)
+            - used_gb: Used swap space in gigabytes (float)
+            - free_gb: Free swap space in gigabytes (float)
+            - percent_used: Percentage of swap used (float)
             
         Example:
             >>> monitor._get_swap_usage()
-            {
-                'total_gb': 4.0,
-                'used_gb': 0.32,
-                'free_gb': 3.68,
-                'percent_used': 8.0
-            }
+            {'total_gb': 4.0, 'used_gb': 0.32, 
+             'free_gb': 3.68, 'percent_used': 8.0}
         """
         swap = psutil.swap_memory()
         return {
@@ -192,9 +202,10 @@ class SystemMonitor:
         
         Returns:
             Dictionary with keys:
-            - 1min: 1-minute load average
-            - 5min: 5-minute load average
-            - 15min: 15-minute load average
+            - 1min: 1-minute load average (float)
+            - 5min: 5-minute load average (float)
+            - 15min: 15-minute load average (float)
+
             Returns empty dict if not supported
             
         Example:
@@ -227,21 +238,27 @@ class SystemMonitor:
             {
                 'sensor_name': [
                     {
-                        'label': 'CPU Core',
-                        'current': 45.0,
-                        'high': 90.0,
-                        'critical': 100.0
+                        'label': Sensor label (str),
+                        'current': Current temperature in °C (float),
+                        'high': High threshold in °C (float or None),
+                        'critical': Critical threshold in °C (float or None)
                     },
                     ...
                 ]
             }
-            Returns empty dict if no sensors available
+
+            Returns empty dictionary if no sensors available or unsupported.
             
         Example:
             >>> monitor._get_temperatures()
             {
-                'acpitz': [{'current': 45.0, 'high': 90.0, ...}],
-                'coretemp': [{'current': 56.0, ...}, ...]
+                'acpitz': [
+                    {'label': '', 'current': 45.0, 'high': 90.0, 'critical': 100.0}
+                ],
+                'coretemp': [
+                    {'label': 'Core 0', 'current': 56.0, 'high': 100.0, 'critical': 100.0},
+                    {'label': 'Core 1', 'current': 54.0, 'high': 100.0, 'critical': 100.0}
+                ]
             }
         """
         try:
