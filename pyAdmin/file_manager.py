@@ -7,9 +7,10 @@ from typing import Dict, List, Optional
 from datetime import datetime
 from pathlib import Path
 
+
 class FileManager:
     """Manage file system operations with path resolution and error handling.
-    
+
     Provides methods for:
     - Copying/moving files with automatic directory creation
     - Creating ZIP archives
@@ -22,10 +23,10 @@ class FileManager:
 
     def __init__(self) -> None:
         """Initialize FileManager with caller's directory as base path.
-        
+
         Determines the directory of the caller script (where the FileManager is instantiated)
         and sets it as the base path for relative operations.
-        
+
         Example:
             >>> fm = FileManager()
         """
@@ -34,13 +35,13 @@ class FileManager:
 
     def _resolve_path(self, path: str) -> Path:
         """Convert relative path to absolute path relative to caller's directory.
-        
+
         Args:
             path: Relative path string to resolve
-            
+
         Returns:
             Path: Absolute Path object resolved relative to caller's directory
-            
+
         Example:
             >>> fm._resolve_path("data.txt")
             PosixPath('/home/user/project/data.txt')
@@ -52,14 +53,14 @@ class FileManager:
 
         Automatically creates destination directories if needed.
         Prints operation status and errors.
-        
+
         Args:
             source: Relative path to source file
             destination: Relative destination path
-            
+
         Returns:
             bool: True if copy succeeded, False otherwise
-            
+
         Example:
             >>> fm.copy_file("config.yml", "backups/config_backup.yml")
             File /project/config.yml copied to /project/backups/config_backup.yml
@@ -90,14 +91,14 @@ class FileManager:
 
         Automatically creates destination directories if needed.
         Prints operation status and errors.
-        
+
         Args:
             source: Relative path to source file
             destination: Relative destination path
-            
+
         Returns:
             bool: True if move succeeded, False otherwise
-            
+
         Example:
             >>> fm.move_file("temp.log", "logs/2023.log")
             File temp.log moved to logs/2023.log
@@ -125,16 +126,16 @@ class FileManager:
 
     def compress_files(self, files: List[str], zip_name: str) -> bool:
         """Create ZIP archive with validation of source files.
-        
+
         Skips non-file entries and directories. Prints detailed operation status.
-        
+
         Args:
             files: List of relative file paths to compress
             zip_name: Name for output ZIP archive (relative path)
-            
+
         Returns:
             bool: True if archive created successfully, False otherwise
-            
+
         Example:
             >>> fm.compress_files(["data.csv", "config.yml"], "backup.zip")
             Archive backup.zip created with 2 files
@@ -157,7 +158,7 @@ class FileManager:
                         added_files += 1
                     else:
                         print(f"Skipping {file_path}: Not a file")
-            
+
             print(f"Archive {zip_path.name} created with {added_files} files")
             return added_files > 0
         except Exception as e:
@@ -166,10 +167,10 @@ class FileManager:
 
     def get_file_metadata(self, file_path: str) -> Dict[str, Optional[str]]:
         """Retrieve detailed metadata for specified file.
-        
+
         Args:
             file_path: Relative path to target file
-            
+
         Returns:
             Dict: Metadata dictionary with keys:
                 - size_bytes: File size in bytes
@@ -178,9 +179,9 @@ class FileManager:
                 - extension: File extension
                 - permissions: Octal permissions string
                 - absolute_path: Full path string
-                
+
             Returns empty dict if file not found
-            
+
         Example:
             >>> fm.get_file_metadata("readme.md")
             {
@@ -194,7 +195,7 @@ class FileManager:
             {}
         """
         resolved_path = self._resolve_path(file_path)
-        
+
         if not resolved_path.exists():
             print(f"File {resolved_path.name} not found")
             return {}

@@ -8,7 +8,7 @@ from pyAdmin.utils import bytes_to_gb
 
 class SystemMonitor:
     """Monitor system resources and performance metrics using psutil.
-    
+
     Provides comprehensive system statistics including:
     - Disk, memory, and CPU utilization
     - Network activity metrics
@@ -23,7 +23,7 @@ class SystemMonitor:
 
     def __init__(self) -> None:
         """Initialize system monitor and verify psutil availability.
-        
+
         Automatically checks for psutil installation during initialization.
         Prints installation instructions if package is missing.
         """
@@ -32,7 +32,7 @@ class SystemMonitor:
     @staticmethod
     def _check_psutil() -> bool:
         """Verify psutil package installation status.
-        
+
         Returns:
             bool: True if psutil is available, False otherwise
         """
@@ -46,7 +46,7 @@ class SystemMonitor:
 
     def get_system_status(self) -> Dict:
         """Get complete system status snapshot.
-        
+
         Returns:
             Dict: Composite dictionary containing:
                 - disk: Disk usage statistics (see _get_disk_usage)
@@ -58,7 +58,7 @@ class SystemMonitor:
                 - uptime: System uptime in seconds (float)
                 - temperatures: Sensor data if available (see _get_temperatures)
                 - process_count: Running processes count (int)
-                
+
             Example:
                 >>> monitor = SystemMonitor()
                 >>> status = monitor.get_system_status()
@@ -85,14 +85,14 @@ class SystemMonitor:
 
     def _get_disk_usage(self) -> Dict[str, float]:
         """Get root partition disk usage statistics.
-        
+
         Returns:
             Dict: Disk metrics with keys:
                 - total_gb: Total space in gigabytes (float)
                 - used_gb: Used space in gigabytes (float)
                 - free_gb: Free space in gigabytes (float)
                 - percent_used: Usage percentage (float)
-                
+
             Example:
                 >>> monitor._get_disk_usage()
                 {'total_gb': 465.76, 'used_gb': 230.15, 
@@ -108,14 +108,14 @@ class SystemMonitor:
 
     def _get_memory_usage(self) -> Dict[str, float]:
         """Get physical memory utilization metrics.
-        
+
         Returns:
             Dict: Memory metrics with keys:
                 - total_gb: Total RAM in gigabytes (float)
                 - available_gb: Available RAM in gigabytes (float)
                 - used_gb: Used RAM in gigabytes (float)
                 - percent_used: Usage percentage (float)
-                
+
             Example:
                 >>> monitor._get_memory_usage()
                 {'total_gb': 15.6, 'available_gb': 8.2, 
@@ -131,14 +131,14 @@ class SystemMonitor:
 
     def _get_cpu_usage(self) -> Dict[str, Optional[float]]:
         """Collect CPU performance metrics.
-        
+
         Returns:
             Dict: CPU metrics with keys:
                 - usage_percent: Current load percentage (float)
                 - cores: Physical core count (int)
                 - threads: Logical thread count (int)
                 - frequency: Current clock speed (GHz) (float or None if unavailable)
-                
+
             Example:
                 >>> monitor._get_cpu_usage()
                 {'usage_percent': 32.1, 'cores': 4, 
@@ -153,14 +153,14 @@ class SystemMonitor:
 
     def _get_network_stats(self) -> Dict[str, int]:
         """Get network input/output counters.
-        
+
         Returns:
             Dict: Network metrics with keys:
                 - bytes_sent: Total bytes sent (int)
                 - bytes_recv: Total bytes received (int)
                 - packets_sent: Total packets sent (int)
                 - packets_recv: Total packets received (int)
-                
+
             Example:
                 >>> monitor._get_network_stats()
                 {'bytes_sent': 4589321, 'bytes_recv': 7832104, 
@@ -176,14 +176,14 @@ class SystemMonitor:
 
     def _get_swap_usage(self) -> Dict[str, float]:
         """Retrieve swap memory utilization statistics.
-        
+
         Returns:
             Dictionary with keys:
             - total_gb: Total swap space in gigabytes (float)
             - used_gb: Used swap space in gigabytes (float)
             - free_gb: Free swap space in gigabytes (float)
             - percent_used: Percentage of swap used (float)
-            
+
         Example:
             >>> monitor._get_swap_usage()
             {'total_gb': 4.0, 'used_gb': 0.32, 
@@ -199,7 +199,7 @@ class SystemMonitor:
 
     def _get_load_average(self) -> Dict[str, Optional[float]]:
         """Get system load averages for 1, 5 and 15 minute intervals.
-        
+
         Returns:
             Dictionary with keys:
             - 1min: 1-minute load average (float)
@@ -207,7 +207,7 @@ class SystemMonitor:
             - 15min: 15-minute load average (float)
 
             Returns empty dict if not supported
-            
+
         Example:
             >>> monitor._get_load_average()
             {'1min': 0.75, '5min': 1.2, '15min': 0.95}
@@ -220,10 +220,10 @@ class SystemMonitor:
 
     def _get_uptime(self) -> float:
         """Calculate system uptime in seconds since last boot.
-        
+
         Returns:
             Uptime duration in seconds as floating point number
-            
+
         Example:
             >>> monitor._get_uptime()
             123456.78  # 34 hours 17 minutes
@@ -232,7 +232,7 @@ class SystemMonitor:
 
     def _get_temperatures(self) -> Dict[str, List[Dict]]:
         """Retrieve hardware temperature sensor readings.
-        
+
         Returns:
             Nested dictionary with structure:
             {
@@ -248,7 +248,7 @@ class SystemMonitor:
             }
 
             Returns empty dictionary if no sensors available or unsupported.
-            
+
         Example:
             >>> monitor._get_temperatures()
             {
@@ -277,10 +277,10 @@ class SystemMonitor:
 
     def _get_process_count(self) -> int:
         """Count currently running processes.
-        
+
         Returns:
             Integer representing number of active processes
-            
+
         Example:
             >>> monitor._get_process_count()
             137  # Typical value for desktop system

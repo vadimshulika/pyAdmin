@@ -13,7 +13,9 @@ API Reference
    :maxdepth: 2
 
    pyAdmin.file_manager
+   pyAdmin.system_monitoring
    pyAdmin.utils
+   pyAdmin.command_executor
 
 Indices and tables
 ==================

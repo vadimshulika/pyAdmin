@@ -10,6 +10,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Tuple, Dict, Optional, Callable, Any
 
+
 class CommandExecutor:
     """Execute and manage shell commands on Windows systems.
 
@@ -20,17 +21,17 @@ class CommandExecutor:
     - Environment variable management
     - Privileged command execution
     - Comprehensive logging
-    
+
     Attributes:
         env_vars (Dict[str, str]): Custom environment variables
         working_dir (Path): Current working directory
         scheduled_tasks (Dict[int, Dict]): Active scheduled tasks
         logger (logging.Logger): Logger instance for operations
     """
-    
+
     def __init__(self, log_file: str = "command_executor.log"):
         """Initialize command executor with default settings.
-        
+
         Args:
             log_file: Path to log file (default: 'command_executor.log')
 
@@ -50,7 +51,7 @@ class CommandExecutor:
 
     def _init_logger(self, log_file: str) -> None:
         """Configure logging handlers with file and console outputs.
-        
+
         Args:
             log_file (str): Path to log file
         """
@@ -79,14 +80,14 @@ class CommandExecutor:
         timeout: Optional[int] = None,
         shell: bool = True
     ) -> Tuple[str, str, int]:
-        """Execute a single shell command with proper error handling.
-        
+        r"""Execute a single shell command with proper error handling.
+
         Args:
             command (str): Command to execute
             cwd (str, optional): Working directory. Default: current directory
             timeout (int, optional): Maximum execution time in seconds
             shell (bool): Use shell interpreter. Recommended for Windows
-            
+
         Returns:
             Tuple[str, str, int]:
                 - stdout: Standard output content
@@ -94,7 +95,7 @@ class CommandExecutor:
                 - return_code: Process exit code
 
             On timeout or exception, returns empty outputs and -1 return code.
-            
+
         Examples:
             >>> executor.execute_command("echo Hello World")
             ('Hello World\\r\\n', '', 0)
@@ -132,16 +133,16 @@ class CommandExecutor:
         stop_on_error: bool = True,
         **kwargs
     ) -> List[Tuple[str, str, int]]:
-        """Execute commands sequentially with error propagation control.
-        
+        r"""Execute commands sequentially with error propagation control.
+
         Args:
             commands (List[str]): List of commands to execute
             stop_on_error (bool): Stop execution on first error
             **kwargs: Additional arguments for execute_command
-            
+
         Returns:
             List[Tuple[str, str, int]]: Execution results for each command
-            
+
         Examples:
             >>> commands = ["echo First", "echo Second", "invalid_command"]
             >>> results = executor.execute_sequence(commands)
@@ -152,18 +153,18 @@ class CommandExecutor:
         """
         results = []
         self.logger.info(f"Executing command sequence ({len(commands)} commands)")
-        
+
         for idx, cmd in enumerate(commands, 1):
             self.logger.debug(f"Executing command {idx}/{len(commands)}: {cmd}")
             result = self.execute_command(cmd, **kwargs)
             results.append(result)
-            
+
             if stop_on_error and result[2] != 0:
                 self.logger.warning(f"Stopped sequence on failed command: {cmd}")
                 break
-                
+
         return results
-    
+
     def schedule_command(
         self,
         command: str,
@@ -173,7 +174,7 @@ class CommandExecutor:
         callback: Optional[Callable[[str, str, int], None]] = None
     ) -> int:
         """Schedule periodic command execution.
-        
+
         Args:
             command (str): Command to execute periodically
             interval (int): Execution interval in seconds
@@ -181,10 +182,10 @@ class CommandExecutor:
             max_runs (int): Maximum number of executions (None = infinite)
             callback (Callable): Function to call after each execution with signature:
                 (stdout: str, stderr: str, return_code: int) -> None
-            
+
         Returns:
             int: Unique task ID
-            
+
         Examples:
             >>> def callback(out, err, code):
             ...     print(f"Task completed with code {code}")
@@ -224,16 +225,16 @@ class CommandExecutor:
         callback: Optional[Callable[[str, str, int], None]] = None
     ) -> int:
         """Schedule one-time command execution at specified time.
-        
+
         Args:
             command (str): Command to execute
             execution_time (datetime): Exact execution time
             callback (Callable): Function to call after execution with signature:
                 (stdout: str, stderr: str, return_code: int) -> None
-            
+
         Returns:
             int: Unique task ID
-            
+
         Examples:
             >>> from datetime import datetime, timedelta
             >>> run_time = datetime.now() + timedelta(minutes=5)
@@ -262,17 +263,17 @@ class CommandExecutor:
 
     def validate_command(self, command: str) -> bool:
         """Verify if command is available in system PATH.
-        
+
         Args:
             command (str): Command to check (uses first token only)
-            
+
         Returns:
             bool: True if command exists in PATH, False otherwise
-            
+
         Examples:
             >>> executor.validate_command("python --version")
             True
-            
+
             >>> executor.validate_command("nonexistent_command")
             False
         """
@@ -280,13 +281,13 @@ class CommandExecutor:
         exists = shutil.which(cmd) is not None
         self.logger.debug(f"Command validation: {cmd} -> {'Exists' if exists else 'Not found'}")
         return exists
-    
+
     def set_environment(self, env_vars: Dict[str, str]) -> None:
         """Update execution environment variables.
-        
+
         Args:
             env_vars (Dict[str, str]): Key-value pairs to add/update
-            
+
         Examples:
             >>> executor.set_environment({"PYTHONPATH": "/custom/path", "DEBUG": "1"})
         """
@@ -301,16 +302,16 @@ class CommandExecutor:
         **kwargs
     ) -> int:
         """Execute command with real-time output streaming.
-        
+
         Args:
             command (str): Command to execute
             output_callback (Callable[[str], None]): Function to handle each output line
             admin (bool): Run with administrator privileges
             **kwargs: Additional arguments for subprocess.Popen
-            
+
         Returns:
             int: Command exit code (-1 on failure)
-            
+
         Examples:
             >>> def output_handler(line):
             ...     print(f"OUTPUT: {line}")
@@ -365,16 +366,16 @@ class CommandExecutor:
         except Exception as e:
             self.logger.error(f"Realtime execution failed: {str(e)}", exc_info=True)
             return -1
-        
+
     def remove_scheduled_task(self, task_id: int) -> bool:
         """Remove scheduled task by ID.
-        
+
         Args:
             task_id (int): Task identifier from schedule methods
-            
+
         Returns:
             bool: True if task was removed, False if not found
-            
+
         Examples:
             >>> task_id = executor.schedule_command(...)
             >>> executor.remove_scheduled_task(task_id)
@@ -386,10 +387,10 @@ class CommandExecutor:
             return True
         self.logger.warning(f"Task {task_id} not found for removal")
         return False
-    
+
     def pause_scheduler(self) -> None:
         """Pause all scheduled task executions.
-        
+
         Examples:
             >>> executor.pause_scheduler()
             >>> executor.get_scheduled_tasks()
@@ -405,7 +406,7 @@ class CommandExecutor:
 
     def resume_scheduler(self) -> None:
         """Resume paused scheduler operations.
-        
+
         Examples:
             >>> executor.pause_scheduler()
             >>> executor.resume_scheduler()
@@ -415,17 +416,17 @@ class CommandExecutor:
         if self.scheduler_thread and self.scheduler_thread.is_alive():
             self.logger.warning("Scheduler already running")
             return
-            
+
         self.stop_scheduler.clear()
         self._start_scheduler()
         self.logger.info("Scheduler resumed")
 
     def get_scheduled_tasks(self) -> Dict[int, Dict[str, Any]]:
         """Get snapshot of currently scheduled tasks.
-        
+
         Returns:
             Dict[int, Dict]: Copy of tasks dictionary
-            
+
         Examples:
             >>> tasks = executor.get_scheduled_tasks()
             >>> print(tasks.keys())
@@ -433,16 +434,16 @@ class CommandExecutor:
         """
         self.logger.debug("Returning tasks snapshot")
         return {k: v.copy() for k, v in self.scheduled_tasks.items()}
-    
+
     def set_working_directory(self, path: str) -> None:
         """Update default working directory for command execution.
-        
+
         Args:
             path (str): Valid directory path
-            
+
         Raises:
             NotADirectoryError: If path is invalid
-            
+
         Examples:
             >>> executor.set_working_directory("C:/projects")
         """
@@ -451,17 +452,17 @@ class CommandExecutor:
             error_msg = f"Invalid directory: {path}"
             self.logger.error(error_msg)
             raise NotADirectoryError(error_msg)
-        
+
         new_path.mkdir(exist_ok=True, parents=True)
         self.working_dir = new_path.resolve()
         self.logger.info(f"Updated working directory to: {self.working_dir}")
 
     def export_environment(self) -> Dict[str, str]:
         """Get current environment variables configuration.
-        
+
         Returns:
             Dict[str, str]: Copy of environment variables
-            
+
         Examples:
             >>> env = executor.export_environment()
             >>> env["NEW_VAR"] = "value"
@@ -471,7 +472,7 @@ class CommandExecutor:
 
     def reset_environment(self) -> None:
         """Reset environment variables to system defaults.
-        
+
         Examples:
             >>> executor.reset_environment()
             >>> executor.export_environment()
@@ -497,11 +498,11 @@ class CommandExecutor:
                     if task['type'] == 'interval':
                         if current_time - task['last_run'] >= task['interval']:
                             self._trigger_task(task_id)
-                            
+
                     elif task['type'] == 'at':
                         if not task['fired'] and current_time >= task['execution_time']:
                             self._trigger_task(task_id)
-                            
+
                 time.sleep(1)
             except Exception as e:
                 self.logger.critical(f"Scheduler loop failed: {str(e)}", exc_info=True)
@@ -517,7 +518,7 @@ class CommandExecutor:
         try:
             self.logger.info(f"Executing task {task_id}: {task['command']}")
             stdout, stderr, code = self.execute_command(task['command'])
-            
+
         except Exception as e:
             self.logger.error(f"Task {task_id} failed: {str(e)}", exc_info=True)
             stdout, stderr, code = "", str(e), -1
@@ -534,21 +535,21 @@ class CommandExecutor:
 
     def _trigger_task(self, task_id: int) -> None:
         """Internal: Launch task execution in separate thread.
-        
+
         Args:
             task_id (int): ID of task to trigger
         """
         try:
             task = self.scheduled_tasks[task_id]
             task['last_run'] = time.time()
-            
+
             thread = threading.Thread(
                 target=self._execute_scheduled_task,
                 args=(task_id,),
                 name=f"TaskExecutor-{task_id}"
             )
             thread.start()
-            
+
             if task['type'] == 'at':
                 task['fired'] = True
                 self.logger.info(f"Triggered one-time task {task_id}")
@@ -587,7 +588,7 @@ class CommandExecutor:
 
     def _handle_task_removal(self, task_id: int) -> None:
         """Internal: Helping for task cleanup operations.
-        
+
         Args:
             task_id (int): ID of task to clean up
         """
@@ -597,7 +598,7 @@ class CommandExecutor:
 
     def _validate_task_structure(self, task: Dict) -> bool:
         """Internal: Validate task dictionary integrity.
-        
+
         Returns:
             bool: True if task structure is valid
         """
@@ -606,4 +607,3 @@ class CommandExecutor:
             'last_run', 'max_runs', 'run_count'
         }
         return all(key in task for key in required_keys)
-    

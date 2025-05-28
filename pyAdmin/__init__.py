@@ -4,5 +4,5 @@ from .file_manager import FileManager
 from .system_monitoring import SystemMonitor
 from .command_executor import CommandExecutor
 
-version = "0.2.0"
+version = "0.2.1"
 all = ['FileManager', 'SystemMonitor', 'CommandExecutor']
