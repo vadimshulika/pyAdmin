@@ -95,7 +95,7 @@ class SystemMonitor:
 
             Example:
                 >>> monitor._get_disk_usage()
-                {'total_gb': 465.76, 'used_gb': 230.15, 
+                {'total_gb': 465.76, 'used_gb': 230.15,
                  'free_gb': 235.61, 'percent_used': 49.4}
         """
         disk = psutil.disk_usage('/')
@@ -118,7 +118,7 @@ class SystemMonitor:
 
             Example:
                 >>> monitor._get_memory_usage()
-                {'total_gb': 15.6, 'available_gb': 8.2, 
+                {'total_gb': 15.6, 'available_gb': 8.2,
                  'used_gb': 7.4, 'percent_used': 47.4}
         """
         memory = psutil.virtual_memory()
@@ -141,7 +141,7 @@ class SystemMonitor:
 
             Example:
                 >>> monitor._get_cpu_usage()
-                {'usage_percent': 32.1, 'cores': 4, 
+                {'usage_percent': 32.1, 'cores': 4,
                  'threads': 8, 'frequency': 3.6}
         """
         return {
@@ -163,7 +163,7 @@ class SystemMonitor:
 
             Example:
                 >>> monitor._get_network_stats()
-                {'bytes_sent': 4589321, 'bytes_recv': 7832104, 
+                {'bytes_sent': 4589321, 'bytes_recv': 7832104,
                  'packets_sent': 12045, 'packets_recv': 18567}
         """
         net = psutil.net_io_counters()
@@ -186,7 +186,7 @@ class SystemMonitor:
 
         Example:
             >>> monitor._get_swap_usage()
-            {'total_gb': 4.0, 'used_gb': 0.32, 
+            {'total_gb': 4.0, 'used_gb': 0.32,
              'free_gb': 3.68, 'percent_used': 8.0}
         """
         swap = psutil.swap_memory()

@@ -530,7 +530,8 @@ class CommandExecutor:
             task['run_count'] += 1
             task['last_run'] = time.time()
 
-            if task['type'] == 'at' or (task['max_runs'] is not None and task['run_count'] >= task['max_runs']):
+            if task['type'] == 'at' or (task['max_runs']
+                                        is not None and task['run_count'] >= task['max_runs']):
                 self.remove_scheduled_task(task_id)
 
     def _trigger_task(self, task_id: int) -> None:
@@ -603,7 +604,7 @@ class CommandExecutor:
             bool: True if task structure is valid
         """
         required_keys = {
-            'type', 'command', 'active', 
+            'type', 'command', 'active',
             'last_run', 'max_runs', 'run_count'
         }
         return all(key in task for key in required_keys)
